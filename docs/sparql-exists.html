@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset='utf-8'>
+    <title>SPARQL EXISTS errata</title>
+    <script src='https://www.w3.org/Tools/respec/respec-w3c-common' async class='remove'></script>
+    <script class='remove'>
+      var respecConfig = {
+        specStatus: "CG-DRAFT",
+        editors: [{
+          name: "Andy Seaborne",
+          //url: "https://www.w3.org/community/sparql-exists/",
+        }],
+        processVersion: 2015,
+        edDraftURI: "https://github.com/w3c/sparql-exists/??",
+        shortName: "sparql-exists-v1",
+        wg:           "SPARQL Maintenance (EXISTS) Community Group",
+   			wgURI:        "https://www.w3.org/community/sparql-exists/",
+    		wgPublicList: "public-sparql-exists",
+       	//wgPatentURI:  "http://www.w3.org/2004/01/pp-impl/73865/status",
+
+      };
+    </script>
+    <!-- Temp during CG bootstrap -->
+    <style type="text/css">
+    .box { border: thin solid #888888;
+           page-break-inside: avoid ;
+           background-color: #F8F8F8 ; padding:1em ;
+           margin-left:0 ; margin-right: 2ex;
+           margin-top: 0.1ex ; margin-bottom: 0.1ex ;
+         }
+    </style>
+  </head>
+  <body>
+    <section id='abstract'>
+      <p>
+        A number of issues with the <tt>SPARQL EXISTS</tt> feature have been identified.
+        This feature is used by the <a rel="nofollow" href="https://www.w3.org/2014/data-shapes/">RDF Data Shapes Working Group</a>.
+        This document records community consensus within the <a href="https://www.w3.org/community/sparql-exists/">SPARQL Maintenance (EXISTS) Community Group</a>
+        for improvements with an emphasis on maintaining compatibility.
+      </p>
+      <p>
+     Any tests produced by the will submitted to the <a rel="nofollow" href="https://www.w3.org/community/rdf-tests/">RDF Test Suite Curation CG</a> for long-term stewardship.
+    </p>
+
+    </section>
+    <section id='sotd'>
+      <p>
+        Draft.
+      </p>
+    </section>
+    <section>
+      <h2>Introduction</h2>
+      <pre class="idl">
+      interface Foo{
+        attribute Bar bar;
+        void doTheFoo();
+      };
+      </pre>
+    </section>
+    <section>
+      <h2>Identified Issues</h2>
+
+      This section describes the issues identified by the Community group.
+
+      <ol>
+        <li>Some uses of EXISTS are not defined during evaluation</li>
+        <li>Substitution happens where definitions are only for variables</li>
+        <li>Blank nodes substituted into BGPs act as variables</li>
+        <li>Substitution can flip MINUS to its disjoint-domain case</li>
+        <li>Substitution affects disconnected variables</li>
+      </ol>
+
+      <p>Orginal message from Peter F. Patel-Schneider :
+      <a href="https://lists.w3.org/Archives/Public/public-sparql-exists/2016Jul/0014.html"
+      >public-sparql-exists/2016Jul/0014</a>
+      .</p>
+
+      <section>
+        <h3>Problem 1: Some uses of EXISTS are not defined during evaluation</h3>
+      <pre class="nohighlight box">
+The evalution of exists in 18.6 is only defined for graph patterns, but in
+  SELECT ?x WHERE {
+    ?x :p :c .
+    FILTER EXISTS { SELECT ?y { ?y :q :c . } } }
+the argument to exists ends up being a ToMultiSet, which is not listed under
+"Graph Pattern" in the table of SPARQL algebra symbols in 18.2.
+
+The argument to exists is not explicitly listed as a "Graph Pattern" when
+the argument to EXISTS is a GroupGraphPattern containing just a SubQuery or
+just an InlineData.  Here the join is simplified away by section 18.2.2.8
+leaving a construct in the SPARQL algebra that is not listed as a graph
+pattern symbol, ToMultiSet or a multiset, respectively.  An example of where
+this happens (but not at the top level of an EXISTS) is the last example of
+18.2.3.
+</pre>
+      </section>
+      <section>
+        <h3>Problem 2: Substitution happens where definitions are only for variables</h3>
+<pre class="nohighlight box">
+In
+  SELECT ?x WHERE {
+    BIND ( :d AS ?x )
+    FILTER EXISTS { BIND ( :e AS ?z ) { SELECT ?x { :b :p :c } } } }
+the substitution from 18.6 ends up with a non-variable in the second argument
+to Project
+  Join ( Extend( BGP(), ?z, :e ) ,
+         ToMultiSet( Project( ToList( BGP( :b :p :c )), { :d } ) ) )
+However Project is only defined in 18.5 for variables in its second argument.
+
+This also affects Extend, multisets, BOUND, and maybe other constructs.
+</pre>
+</section>
+<section>
+  <h3>Problem 3: Blank nodes substituted into BGPs act as variables</h3>
+<pre class="nohighlight box">
+In
+  SELECT ?x WHERE {
+    ?x :p :d .
+    FILTER EXISTS { ?x :q :b . } }
+against the graph { _:c :p :d , :e :q :b }
+the substitution from 18.6 ends up producing
+  BGP(_:c :q :b)
+when then matches against :e :q :b because the _:c can be mapped to :e by
+the RDF instance mapping that is part of pattern instance mappings in
+18.3.1.
+
+Some implementations diverge from the spec here.
+</pre>
+</section>
+<section>
+  <h3>Problem 4: Substitution can flip MINUS to its disjoint-domain case</h3>
+<pre class="nohighlight box">
+In
+  SELECT ?x WHERE {
+    ?x :p :c .
+    FILTER EXISTS { ?x :p :c . MINUS { ?x :p :c . } } }
+on the graph { :d :p :c }
+the substitution from 18.6 ends up producing
+  Minus( BGP( :d :p :c ), BGP( :d :p :c ) )
+which produces a non-empty result because the two solution mappings for the
+Minus have disjoint domains and 18.5 dictates that then the result is not
+empty.
+
+Some implementations diverge from the spec here.
+</pre>
+</section>
+<section>
+  <h3>Problem 5: Substitution affects disconnected variables</h3>
+<pre class="nohighlight box">
+In
+  SELECT ?x WHERE {
+    BIND ( :d AS ?x )
+    FILTER EXISTS { BIND ( :e AS ?z )
+                    SELECT ?y WHERE { ?x :p :c } } }
+the substitution from 18.6 ends up producing
+  Join ( Extend( BGP(), ?z :e ),
+         ToMultiSet( Project( ToList( BGP( :d :p :c ) ), { ?y } ) ) )
+
+Some, but not all, implementations diverge from the spec here.
+      </pre>
+
+      </section>
+    </section>
+    <section>
+      <h2>Solutions</h2>
+      <section>
+        <h3>Issue 1</h3>
+      </section>
+      <section>
+        <h3>Issue 2</h3>
+      </section>
+      <section>
+        <h3>Issue 3</h3>
+      </section>
+      <section>
+        <h3>Issue 4</h3>
+      </section>
+      <section>
+        <h3>Issue 5</h3>
+      </section>
+
+    </section>
+
+
+  </body>
+</html>
