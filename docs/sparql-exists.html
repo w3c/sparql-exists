@@ -173,6 +173,34 @@ Some, but not all, implementations diverge from the spec here.
 
     </section>
 
+    <section>
+      <h2>Other errata</h2>
+      <p>This section records other possible errata discovered by the community group.</p>
+
+      <section>
+        <h3>Transalation of <tt>VALUES</tt></h3>
+
+        <p>
+          Near the end of section
+          "<a href="https://www.w3.org/TR/sparql11-query/#sparqlTranslateGraphPatterns"
+            >18.2.2.6 Translate Graph</a>" the translation of
+            <a href="https://www.w3.org/TR/sparql11-query/#data-block">inline data</a>
+            should result in a <tt>ToMultiSet(data)</tt>.
+          </p>
+          <p>Translation of a trailing <tt>VALUES</tt> already uses this form.</p>
+          <blockquote>
+            <p>
+            For each <a href="https://www.w3.org/TR/sparql11-query/#rDataBlock">DataBlock</a>,
+            form a solution mapping from the variable in the corresponding position in list of variables (or single variable),
+            omitting a binding if the BindingValue is the word UNDEF.
+          </p><p>
+            Combine each solution mappings into a solution sequence S, and apply <tt>ToMultiSet<tt>.
+            <pre class="codeBlock">The result is ToMultiset(S)</pre>
+          </p>
+          </blockquote>
+      </section>
+
+    </section>
 
   </body>
 </html>
