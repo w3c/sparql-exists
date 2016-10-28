@@ -85,6 +85,20 @@ pattern symbol, ToMultiSet or a multiset, respectively.  An example of where
 this happens (but not at the top level of an EXISTS) is the last example of
 18.2.3.
 </pre>
+
+<p>
+From <a href="https://github.com/w3c/sparql-exists/wiki/Problem:-Some-uses-of-EXISTS-are-not-defined-during-evaluation">Problem: Some uses of EXISTS are not defined during evaluation</a>
+<pre>
+query-errata-N:
+
+"Section 18.2 Translation to the SPARQL Algebra" intro (end):
+
+ToMultiSet can be used where a graph pattern is mentioned below because the
+outcome of evaluating a graph pattern is a multiset.
+
+Multisets of solution mappings are elements of the SPARQL algebra.  Multisets
+of solution mappings count as graph patterns.
+</pre>
       </section>
       <section>
         <h3>Problem 2: Substitution happens where definitions are only for variables</h3>
