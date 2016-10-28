@@ -1,0 +1,9 @@
+PREFIX : <http://example/>
+
+:s1 :q 1 .
+:s2 :q 2 .
+
+:graph {
+  :r :p 2 .
+  :r :p 3 .
+}

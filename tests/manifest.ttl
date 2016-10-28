@@ -1,0 +1,73 @@
+@prefix rdf:    <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix : <http://www.w3.org/2009/sparql/docs/tests/data-sparql11/exists/manifest#> .
+@prefix rdfs:	<http://www.w3.org/2000/01/rdf-schema#> .
+@prefix mf:     <http://www.w3.org/2001/sw/DataAccess/tests/test-manifest#> .
+@prefix qt:     <http://www.w3.org/2001/sw/DataAccess/tests/test-query#> .
+@prefix dawgt:   <http://www.w3.org/2001/sw/DataAccess/tests/test-dawg#> .
+@prefix sparql:  <http://www.w3.org/ns/sparql#> .
+
+<>  rdf:type mf:Manifest ;
+    rdfs:label "Positive Exists" ;
+    mf:entries
+    (
+      :exists-filter-1
+      :exists-bnodes-1
+      :exists-bnodes-2
+      :exists-bnodes-3
+      :exists-graph-1
+      :exists-graph-2
+  ).
+
+:exists-filter-1 rdf:type mf:QueryEvaluationTest ;
+    mf:name "Exists with FILTER";
+	mf:feature sparql:exists ;
+    mf:action
+         [ qt:query  <exists-filter-1.rq> ;
+           qt:data   <exists-filter.ttl> ] ;
+    mf:result  <exists-filter-1.srj>
+    .
+    
+:exists-bnodes-1 rdf:type mf:QueryEvaluationTest ;
+    mf:name "Exists: data has bnodes.";
+	mf:feature sparql:exists ;
+    mf:action
+         [ qt:query  <exists-bnodes-1.rq> ;
+           qt:data   <exists-bnodes.ttl> ] ;
+    mf:result  <exists-bnodes-1.srj>
+    .
+
+:exists-bnodes-2 rdf:type mf:QueryEvaluationTest ;
+    mf:name "Exists: data has bnodes, FILTER(=)";
+	mf:feature sparql:exists ;
+    mf:action
+         [ qt:query  <exists-bnodes-1.rq> ;
+           qt:data   <exists-bnodes.ttl> ] ;
+    mf:result  <exists-bnodes-1.srj>
+    .
+
+:exists-bnodes-3 rdf:type mf:QueryEvaluationTest ;
+    mf:name "Exists; data has bnodes, Filter(sameTerm)";
+	mf:feature sparql:exists ;
+    mf:action
+         [ qt:query  <exists-bnodes-1.rq> ;
+           qt:data   <exists-bnodes.ttl> ] ;
+    mf:result  <exists-bnodes-1.srj>
+    .
+    
+:exists-graph-1 rdf:type mf:QueryEvaluationTest ;
+    mf:name "Exists with GRAPH";
+	mf:feature sparql:exists ;
+    mf:action
+         [ qt:query  <exists-graph-1.rq> ;
+           qt:data   <exists-graph.trig> ] ;
+    mf:result  <exists-graph-1.srj>
+    .
+
+:exists-graph-2 rdf:type mf:QueryEvaluationTest ;
+    mf:name "Exists with GRAPH and FILTER";
+	mf:feature sparql:exists ;
+    mf:action
+         [ qt:query  <exists-graph-2.rq> ;
+           qt:data   <exists-graph.trig> ] ;
+    mf:result  <exists-graph-2.srj>
+    .

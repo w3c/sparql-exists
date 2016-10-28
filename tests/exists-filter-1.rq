@@ -1,0 +1,10 @@
+PREFIX : <http://example/>
+
+
+SELECT ?s {
+  ?s :q ?v .
+  FILTER EXISTS {
+      :r :p ?z .
+      FILTER(?z = ?v)
+    }
+}

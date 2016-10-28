@@ -1,0 +1,13 @@
+PREFIX :        <http://example/>
+PREFIX rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
+
+_:s1 :q 1 .
+_:s1 rdfs:label "_:s1" .
+
+_:s2 :q 2 .
+_:s2 rdfs:label "_:s1" .
+
+_:r :p 2 .
+_:r :p 3 .
+_:r rdfs:label "_:r" .
+

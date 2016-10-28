@@ -1,0 +1,12 @@
+{
+  "head": {
+    "vars": [ "label" ]
+  } ,
+  "results": {
+    "bindings": [
+      {
+        "label": { "type": "literal" , "value": "_:s1" }
+      }
+    ]
+  }
+}

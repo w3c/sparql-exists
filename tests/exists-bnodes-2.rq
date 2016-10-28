@@ -1,0 +1,11 @@
+PREFIX : <http://example/>
+PREFIX rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
+
+SELECT ?label {
+  ?s :q ?o .
+  ?s rdfs:label ?label .
+  FILTER EXISTS {
+      ?r :p ?z .
+      FILTER(?o = ?z)
+    }
+}
