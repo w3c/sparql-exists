@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+Abisc Grapu<!DOCTYPE html>
 <html>
   <head>
     <meta charset='utf-8'>
@@ -40,7 +40,7 @@
         for improvements with an emphasis on maintaining compatibility.
       </p>
       <p>
-     Any tests produced by the will submitted to the <a rel="nofollow" href="https://www.w3.org/community/rdf-tests/">RDF Test Suite Curation CG</a> for long-term stewardship.
+     Any tests produced by the group will submitted to the <a rel="nofollow" href="https://www.w3.org/community/rdf-tests/">RDF Test Suite Curation CG</a> for long-term stewardship.
     </p>
 
     </section>
@@ -68,74 +68,91 @@
       .</p>
 
       <section>
-        <h3>Problem 1: Some uses of EXISTS are not defined during evaluation</h3>
-      <pre class="nohighlight box">
-The evalution of exists in 18.6 is only defined for graph patterns, but in
-  SELECT ?x WHERE {
-    ?x :p :c .
-    FILTER EXISTS { SELECT ?y { ?y :q :c . } } }
-the argument to exists ends up being a ToMultiSet, which is not listed under
-"Graph Pattern" in the table of SPARQL algebra symbols in 18.2.
-
-The argument to exists is not explicitly listed as a "Graph Pattern" when
-the argument to EXISTS is a GroupGraphPattern containing just a SubQuery or
-just an InlineData.  Here the join is simplified away by section 18.2.2.8
-leaving a construct in the SPARQL algebra that is not listed as a graph
-pattern symbol, ToMultiSet or a multiset, respectively.  An example of where
-this happens (but not at the top level of an EXISTS) is the last example of
-18.2.3.
-</pre>
-
-<p>
-From <a href="https://github.com/w3c/sparql-exists/wiki/Problem:-Some-uses-of-EXISTS-are-not-defined-during-evaluation">Problem: Some uses of EXISTS are not defined during evaluation</a>
-<pre>
-query-errata-N:
-
-"Section 18.2 Translation to the SPARQL Algebra" intro (end):
-
-ToMultiSet can be used where a graph pattern is mentioned below because the
-outcome of evaluating a graph pattern is a multiset.
-
-Multisets of solution mappings are elements of the SPARQL algebra.  Multisets
-of solution mappings count as graph patterns.
-</pre>
+        <h3>Issue 1: Some uses of EXISTS are not defined during evaluation</h3>
+        <p>
+          The evaluation process in the specificiation is defined for graph patterns but
+          there are situations where the evaluation is of an alegbra form not
+          listed.
+        </p>
+        <p>For example:</p>
+        <pre class="nohighlight box">FILTER EXISTS { SELECT ?y { ?y :q :c . } }</pre>
+        and
+        <pre class="nohighlight box">FILTER EXISTS { VALUES ?y { 123 } }</pre>
+        <p>
+          The argument to 
+          <a href="https://www.w3.org/TR/sparql11-query/#defn_evalExists"><code>exists</code></a>
+          is not explicitly listed as a "Graph Pattern" in the table of SPARQL algebra symbols in
+          <a href="https://www.w3.org/TR/sparql11-query/#sparqlQuery">section 18.2</a>
+          when the argument to <code>EXISTS</code> is a 
+          <a href="https://www.w3.org/TR/sparql11-query/#rGroupGraphPattern">GroupGraphPattern</a>
+          containing just a 
+          <a href="https://www.w3.org/TR/sparql11-query/#subqueries">subquery</a>
+          or just 
+          <a href="https://www.w3.org/TR/sparql11-query/#inline-data">InlineData</a>.
+        </p>
       </section>
+
       <section>
-        <h3>Problem 2: Substitution happens where definitions are only for variables</h3>
-<pre class="nohighlight box">
-In
-  SELECT ?x WHERE {
-    BIND ( :d AS ?x )
-    FILTER EXISTS { BIND ( :e AS ?z ) { SELECT ?x { :b :p :c } } } }
-the substitution from 18.6 ends up with a non-variable in the second argument
-to Project
-  Join ( Extend( BGP(), ?z, :e ) ,
-         ToMultiSet( Project( ToList( BGP( :b :p :c )), { :d } ) ) )
-However Project is only defined in 18.5 for variables in its second argument.
+        <h3>Issue 2: Substitution happens where definitions are only for variables</h3>
 
-This also affects Extend, multisets, BOUND, and maybe other constructs.
-</pre>
-</section>
-<section>
-  <h3>Problem 3: Blank nodes substituted into BGPs act as variables</h3>
-<pre class="nohighlight box">
-In
-  SELECT ?x WHERE {
+        <p>There are places in the SPARQL syntax and algebra where
+          variables are allowed but not RDF terms (constant values).<p>
+
+        <p>Example:</p>
+        <pre class="nohighlight box">FILTER EXISTS { BIND ( :e AS ?z ) { SELECT ?x { :b :p :c } } } }</pre>
+
+        <p>Both positions "AS ?z" and "SELECT ?x" must be variables.</p>
+
+        <p>In the algebra, this affects</p>
+        <ul>
+          <li><a href="https://www.w3.org/TR/sparql11-query/#defn_extend"><code>extend</code></a>
+            (related to the use of <code>AS</code> in SPARQL syntax)</li>
+          <li><a href="https://www.w3.org/TR/sparql11-query/#inline-data">in line data</a> 
+          ((related to the use of <code>VALUES</code>)</li>
+          <li><a href="https://www.w3.org/TR/sparql11-query/#func-bound"><code>BOUND</code></a></li>
+      </section>
+
+      <section>
+        <h3>Issue 3: Blank nodes substituted into BGPs act as variables</h3>
+
+        <p>In the 
+          <a href="https://www.w3.org/TR/sparql11-query/#BasicGraphPattern"
+             >evaluation of basic graph patterns</a> 
+          (BGPs) blank nodes 
+          <a href="https://www.w3.org/TR/sparql11-query/#BGPsparql">are replaced</a>
+          by RDF terms from the graph being matched and variables are replaced by a solution
+          mapping from query variables to RDF terms so that the  basic graph pattern is
+          now a subgraph of the graph being matched.
+        </p>
+        <p>Simply substituting a variable with a blank node in the <code>EXISTS</code>
+          evaluation process does not cause the basic graph pattern to be 
+          to be restricted to subgraphs containing that blank node as an RDF term
+          because it is mapped by an 
+          <a href="https://www.w3.org/TR/2004/REC-rdf-mt-20040210/#definst">RDF instance
+          mapping</a> before checking that the BGP after mapping is a subgraph of the
+          graph being queried.
+        </p>
+        <p>Note that elsewhere in the evaluation of the SPARQL algebra, a solution
+          mapping with a binding from variable to blank node, does treat blank nodes
+          as RDF terms. They are not mapped by an RDF instance mapping.
+        </p>
+        <p>Example:</p>
+        <pre class="nohighlight box">SELECT ?x WHERE {
     ?x :p :d .
-    FILTER EXISTS { ?x :q :b . } }
-against the graph { _:c :p :d , :e :q :b }
-the substitution from 18.6 ends up producing
-  BGP(_:c :q :b)
-when then matches against :e :q :b because the _:c can be mapped to :e by
-the RDF instance mapping that is part of pattern instance mappings in
-18.3.1.
+    FILTER EXISTS { ?x :q :b . } }</pre>
+        <p>
+          against the graph <tt>{ _:c :p :d , :e :q :b }</tt>
+          the substitution for <code>EXISTS</code> produces
+          <tt>BGP(_:c :q :b)</tt> which then
+          matches against <tt>:e :q :b</tt> because the <tt>_:c</tt> can be mapped to <tt>:e</tt> by
+          the RDF instance mapping that is part of pattern instance mappings in 
+          <a href="https://www.w3.org/TR/sparql11-query/#BGPsparql">18.3.1</a>.
+        </p>
+      </section>
 
-Some implementations diverge from the spec here.
-</pre>
-</section>
-<section>
-  <h3>Problem 4: Substitution can flip MINUS to its disjoint-domain case</h3>
-<pre class="nohighlight box">
+      <section>
+        <h3>Issue 4: Substitution can flip MINUS to its disjoint-domain case</h3>
+        <pre class="nohighlight box">
 In
   SELECT ?x WHERE {
     ?x :p :c .
@@ -146,13 +163,12 @@ the substitution from 18.6 ends up producing
 which produces a non-empty result because the two solution mappings for the
 Minus have disjoint domains and 18.5 dictates that then the result is not
 empty.
+        </pre>
+      </section>
 
-Some implementations diverge from the spec here.
-</pre>
-</section>
-<section>
-  <h3>Problem 5: Substitution affects disconnected variables</h3>
-<pre class="nohighlight box">
+      <section>
+        <h3>Issue 5: Substitution affects disconnected variables</h3>
+        <pre class="nohighlight box">
 In
   SELECT ?x WHERE {
     BIND ( :d AS ?x )
@@ -167,22 +183,172 @@ Some, but not all, implementations diverge from the spec here.
 
       </section>
     </section>
+    
+    <section>
+      <h2>An Alternative to Substitution</h2>
+      <p>
+        The process whereby evaluation of <code>EXISTS</code> takes place is defined by
+        <a href="https://www.w3.org/TR/sparql11-query/#defn_substitute">substitution</a>.
+        This section proposes an alternative mechanism with 3 parts:
+      </p>
+      <ul>
+        <li>Renaming inner scope variables</li>
+        <li>Disallowing setting variables via <code>extend</code> if the variable is in
+          any possible the current row being filtered</li>
+        <li>Restricting the RDF terms that a varibale can be mapped in in a solution
+          mapping durign evaluation of <code>exists</code>.</li>
+      </ul>
+
+      <section>
+        <h3>Renaming</h3>
+
+      <pre>== Definition: Projection Expression Variable Remapping
+
+For a projection algebra operation P with set of variables PV, define
+
+   F = mapping from V to V.
+      such that
+      F(v) = v if v in PV
+      F(v) = v1, v1 a variable with a name not used in the query
+                    and not used in any other projection mapping.
+
+Define the project mapping PrjMap(P,PV) to be the algebra expression P (and the subtree
+over which the projection is defined) with F applied to every variable of the algebra
+expression over which P is evaluated.
+
+
+== Definition: Variable Remapping
+
+For any algebra expression X, not a projection:
+
+PrjMap(X) = replace all project operations with  PrjMap(P,PV) for each projection in X.
+</pre>
+
+
+      </section>
+
+      <section>
+        <h3>No assignment</h3>
+        <p>
+          Assignment (an "AS" in SPARQL syntax) to a variable which is in-scope for the
+          <tt>FILTER</tt> is not allowed.  Any potential variables in a "current row", are considered
+          in-scope for the <code>EXIST</code> expression.
+          Section <a href="https://www.w3.org/TR/sparql11-query/#variableScope">18.2.1 Variable Scope</a>
+          defines the set of variables that are in-scope in the
+          <a href="https://www.w3.org/TR/sparql11-query/#rGroupGraphPattern">GroupGraphPattern</a>
+          where the filter appears.
+        </p>
+        <p>This is a syntactic restriction and is added to the notes in section 
+          <a href="https://www.w3.org/TR/sparql11-query/#sparqlGrammar">19.8 Grammar</a>.
+          See also notes 12 qnd 13 that alrady apply.
+        </p>
+      </section>
+
+      <section>
+        <h3>Restriction of Bindings</h3>
+
+        <p>The proposal is to retain the variables from the current row are retained, not
+          substitute them for RDF terms before evaluation, but also restrict 
+          the binding of the solution to the RDF term of the current row. This occurs
+          after renaming.
+        </p>
+      <p>
+      <p>
+        Solution mappings define binding for variables in 3 places:
+      </p>
+      <ul>
+        <li><a href="https://www.w3.org/TR/sparql11-query/#BGPsparql">Basic Graph Pattern Matching</a></li>
+        <li><a href="https://www.w3.org/TR/sparql11-query/#PropertyPathPatterns">Property Path Patterns</a></li>
+        <li>The <a href="https://www.w3.org/TR/sparql11-query/#defn_evalGraph">evaluation of algebra form
+            <code>Graph(var,P)</code></a> involving a variable (from the syntax <code>GRAPH ?variable {...}</code>)</li>
+      </ul>
+      <p>Note that other place where solution mappings add varibales is in
+        <code>extend</code> but the "no assignment" condition precludes this happening.
+      </p>
+      <p>Restricting the RDF Terms for a variable binding is done using
+        inline data that is joined with the evalaution of the basic graph pattern,
+        property path or graph match.</p>
+
+<pre>== Definition: Replace(pattern, μ)
+
+For solution mapping μ, define Table(μ) be the multiset forms from μ.
+
+Table(μ) = ToMultiSet(solution sequence { μ })
+
+Replace(X, μ) is
+If X is a BGP ,
+    replace X with join(X, Table(μ))
+
+If X is a property path expression,
+    replace X with join(P, Table(μ))
+
+If X is Graph(Var, pattern)
+    replace X with join(X, Table(μ))
+
+
+== Definition: Evaluation of Exists
+
+Let μ be the current solution mapping for a filter and X a graph pattern:
+
+exists(X) = true if and only if
+              eval(D(G), Replace(PrjMap(X), μ)
+            is a non empty solution sequence.
+
+exists(X) = false otherwise
+</pre>
+
+
+      <p>Note: Incomplete: <tt>HAVING</tt></p>
+
+    </section>
+
+
     <section>
       <h2>Solutions</h2>
+
+      <p>This section addresses each issue identified, given the proposal above.</p>
+
       <section>
-        <h3>Issue 1</h3>
+        <h3>Issue 1: Some uses of EXISTS are not defined during evaluation</h3>
+        
+        <p>This can be handled by handling solution sequences as graph patterns where
+          needed by adding 
+          <a href="https://www.w3.org/TR/sparql11-query/#defn_algToMultiSet">toMultiSet</a>
+          as is done fot <a href="#rSubSelect">SubSelect</a>
+          in <a href="https://www.w3.org/TR/sparql11-query/#sparqlTranslateGraphPatterns">18.2.2.6 Translate Graph Patterns</a>
+          with a a correction to the text at the end of
+          <a href="https://www.w3.org/TR/sparql11-query/#sparqlQuery">Section 18.2</a>
+          introductory paragraph.
+        </p>
+
+<pre>query-errata-N:
+
+"Section 18.2 Translation to the SPARQL Algebra" intro (end):
+
+ToMultiSet can be used where a graph pattern is mentioned below because the
+outcome of evaluating a graph pattern is a multiset.
+
+Multisets of solution mappings are elements of the SPARQL algebra.  Multisets
+of solution mappings count as graph patterns.
+</pre>
       </section>
-      <section>
-        <h3>Issue 2</h3>
+
       </section>
+
       <section>
-        <h3>Issue 3</h3>
+        <h3>Issue 2: Substitution happens where definitions are only for variables</h3>
       </section>
+
       <section>
-        <h3>Issue 4</h3>
+         <h3>Issue 3: Blank nodes substituted into BGPs act as variables</h3>
       </section>
+
       <section>
-        <h3>Issue 5</h3>
+         <h3>Issue 4: Substitution can flip MINUS to its disjoint-domain case</h3>
+      </section>
+
+      <section>
+        <h3>Issue 5: Substitution affects disconnected variables</h3>
       </section>
 
     </section>
