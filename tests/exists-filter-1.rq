@@ -1,6 +1,5 @@
 PREFIX : <http://example/>
 
-
 SELECT ?s {
   ?s :q ?v .
   FILTER EXISTS {
