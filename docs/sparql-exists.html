@@ -121,7 +121,7 @@
           <li><a href="https://www.w3.org/TR/sparql11-query/#defn_extend"><code>extend</code></a>
             (related to the use of <code>AS</code> in SPARQL syntax)</li>
           <li><a href="https://www.w3.org/TR/sparql11-query/#inline-data">in line data</a> 
-          ((related to the use of <code>VALUES</code>)</li>
+          (related to the use of <code>VALUES</code>)</li>
           <li><a href="https://www.w3.org/TR/sparql11-query/#func-bound"><code>BOUND</code></a></li>
       </section>
 
@@ -319,23 +319,16 @@ Some, but not all, implementations diverge from the spec here.
           For solution mapping μ, define Table(μ) to be the multiset formed from μ.
         </p>
         <p>
-        &nbsp;&nbsp;&nbsp;Table(μ) = { μ }, 
-        &nbsp;&nbsp;&nbsp;Card[Table(μ)] = 1
+        &nbsp;&nbsp;&nbsp;Table(μ) = { μ }<br/>
+        &nbsp;&nbsp;&nbsp;Card[μ] = 1
         </p>
         <p>
-          Define the <dfn>Values Insertion</dfn> function Replace(X, μ):
-        </p>
-        <p>
-          If X is a <a href="https://www.w3.org/TR/sparql11-query/#sparqlTranslateBasicGraphPatterns">Basic Graph Pattern</a>,<br/>
-          &nbsp;&nbsp;&nbsp;Replace(X, μ) = replace X with join(X, Table(μ))
-        </p>
-        <p>
-          If X is a <a href="https://www.w3.org/TR/sparql11-query/#sparqlTranslatePathExpressions">Property Path Expression</a>,<br/>
-          &nbsp;&nbsp;&nbsp;Replace(X, μ) = replace X with join(X, Table(μ))
-        </p>
-        <p>
-          If X is of the form <a href="https://www.w3.org/TR/sparql11-query/#sparqlTranslateGraphPatterns"><tt>Graph(Var, pattern)</tt></a>,<br/>
-          &nbsp;&nbsp;&nbsp;Replace(X, μ) = replace X with join(X, Table(μ))
+          Define the <dfn>Values Insertion</dfn> function <tt>Replace(X, μ)</tt> to
+          replace each occurence Y of a 
+          <a href="https://www.w3.org/TR/sparql11-query/#sparqlTranslateBasicGraphPatterns">Basic Graph Pattern</a>,
+          <a href="https://www.w3.org/TR/sparql11-query/#sparqlTranslatePathExpressions">Property Path Expression</a>,
+           <a href="https://www.w3.org/TR/sparql11-query/#sparqlTranslateGraphPatterns"><tt>Graph(Var, pattern)</tt>
+          in X with join(Y, Table(μ)).
         </p>
       </div>
 
@@ -346,7 +339,7 @@ Some, but not all, implementations diverge from the spec here.
           define the <dfn>Evaluation of Exists</dfn> <tt>exists(X)</tt>
         </p>
         <p>
-        &nbsp;&nbsp;&nbsp;exists(X) = true if and only if eval(D(G), Replace(PrjMap(X), μ) is a non empty solution sequence.
+        &nbsp;&nbsp;&nbsp;exists(X) = true if and only if eval(D(G), Replace(PrjMap(X), μ) is a non-empty solution sequence.
         </p>
         <p>
         &nbsp;&nbsp;&nbsp;exists(X) = false otherwise
