@@ -1,4 +1,4 @@
-Abisc Grapu<!DOCTYPE html>
+<!DOCTYPE html>
 <html>
   <head>
     <meta charset='utf-8'>
@@ -29,6 +29,19 @@ Abisc Grapu<!DOCTYPE html>
            margin-left:0 ; margin-right: 2ex;
            margin-top: 0.1ex ; margin-bottom: 0.1ex ;
          }
+
+    /* Definitions - Same as SPARQL spec */
+    .defn { margin-left:0 ; margin-right: 2ex; 
+            margin-top: 0.1ex ; margin-bottom: 0.1ex ;
+            /*border: double 1px #888888; *//* Buggy */
+            border: thin solid #888888;
+            padding: 1ex 2ex 0.5ex 2ex ; /* top, right, bottom, left */
+            page-break-inside: avoid ;
+            background-color: #F0F8F8 ; }
+    div.defn p	{ margin-top: 1ex ; margin-bottom: 1.5ex ;}
+    div.defn ul	{ margin-top: 1ex ; margin-bottom: 1.5ex ; }
+    @media print      { .defn { margin: 1em 1em 1em 1em ; } }
+    span.definedTerm  {font-weight: bold;}
     </style>
   </head>
   <body>
@@ -196,39 +209,70 @@ Some, but not all, implementations diverge from the spec here.
         <li>Disallowing setting variables via <code>extend</code> if the variable is in
           any possible the current row being filtered</li>
         <li>Restricting the RDF terms that a varibale can be mapped in in a solution
-          mapping durign evaluation of <code>exists</code>.</li>
+          mapping during evaluation of <code>exists</code>.</li>
       </ul>
 
       <section>
         <h3>Renaming</h3>
-
-      <pre>== Definition: Projection Expression Variable Remapping
-
-For a projection algebra operation P with set of variables PV, define
-
-   F = mapping from V to V.
-      such that
-      F(v) = v if v in PV
-      F(v) = v1, v1 a variable with a name not used in the query
-                    and not used in any other projection mapping.
-
-Define the project mapping PrjMap(P,PV) to be the algebra expression P (and the subtree
-over which the projection is defined) with F applied to every variable of the algebra
-expression over which P is evaluated.
-
-
-== Definition: Variable Remapping
-
-For any algebra expression X, not a projection:
-
-PrjMap(X) = replace all project operations with  PrjMap(P,PV) for each projection in X.
-</pre>
-
-
+        <p>
+          Within sub-queries, variables with the same name can be used but they do not
+          appear in the overall results of the query. Such inner variables are not 
+          <a href="https://www.w3.org/TR/sparql11-query/#variableScope">in-scope</a>
+          when they are no mentioned in the projection part of the inner SELECT expression.
+        </p>
+        <pre class="nohighlight box">SELECT * {
+    ?s :value ?v .
+    FILTER EXISTS {
+       {SELECT (count(*) AS ?C) {
+            ?s :property ?w .
+       }}
+       FILTER ( ?C < ?v )
+   }
+}</pre>
+        <p>Here, the <tt>?s</tt> is not mentioned in the projection in 
+          <tt>SELECT (count(*) AS ?C)</tt>.
+        </p>
+        <p>Such variable usages can be replaced with a variable of a different name, if
+          that name is not used anywhere else in the query, and the same results are
+          obtained in the sub-query.
+        </p>
+        <p>
+          To preserve this, any such variables are renamed so they do not coincide with
+          varibales from the current row being filter by EXISTS.
+        </p>
+        <div class="defn">
+          <b>Definition: <a id="defn_projmap" name="defn_projmap">Projection Expression Variable Remapping</a></b>
+          <p>
+            For a projection algebra operation P with set of variables PV, define
+            a partial mapping F from
+            <a href="https://www.w3.org/TR/sparql11-query/#sparqlQueryVariables">V</a>,
+            the set of all variables, to V where:
+          </p>
+          <p>
+          &nbsp;&nbsp;&nbsp;F(v) = v if v in PV<br/>
+          &nbsp;&nbsp;&nbsp;F(v) = v1 where v1 is a fresh variable
+          </p>
+          <p>
+            Define the <dfn>Projection Expression Variable Remapping</dfn> PrjMap(P,PV) to
+            be the algebra expression P (and the subtree over which the projection is
+            defined) with F applied to every variable of the algebra expression over which
+            P is evaluated.
+          </p>
+        </div>
+        <div class="defn">
+          <b>Definition: <a id="defn_varrename" name="defn_varrename">Variable Remapping</a></b>
+          <p>
+            For any algebra expression X, not a projection, define the
+            <dfn>Variable Remapping</dfn> PrjMap(X):
+          </p>
+          <p>
+            &nbsp;&nbsp;&nbsp;PrjMap(X) = replace all project operations with PrjMap(P,PV) for each projection in X.
+          </p>
+        </div>
       </section>
 
       <section>
-        <h3>No assignment</h3>
+        <h3>Limitations on Assignment</h3>
         <p>
           Assignment (an "AS" in SPARQL syntax) to a variable which is in-scope for the
           <tt>FILTER</tt> is not allowed.  Any potential variables in a "current row", are considered
@@ -240,7 +284,7 @@ PrjMap(X) = replace all project operations with  PrjMap(P,PV) for each projectio
         </p>
         <p>This is a syntactic restriction and is added to the notes in section 
           <a href="https://www.w3.org/TR/sparql11-query/#sparqlGrammar">19.8 Grammar</a>.
-          See also notes 12 qnd 13 that alrady apply.
+          See also notes 12 and 13 that already apply.
         </p>
       </section>
 
@@ -267,36 +311,47 @@ PrjMap(X) = replace all project operations with  PrjMap(P,PV) for each projectio
       </p>
       <p>Restricting the RDF Terms for a variable binding is done using
         inline data that is joined with the evalaution of the basic graph pattern,
-        property path or graph match.</p>
+        property path or graph match.
+      </p>
+      <div class="defn">
+        <b>Definition: <a id="defn_valuesinsertion" name="defn_valuesinsertion">Values Insertion</a></b>
+        <p>
+          For solution mapping μ, define Table(μ) to be the multiset formed from μ.
+        </p>
+        <p>
+        &nbsp;&nbsp;&nbsp;Table(μ) = { μ }, 
+        &nbsp;&nbsp;&nbsp;Card[Table(μ)] = 1
+        </p>
+        <p>
+          Define the <dfn>Values Insertion</dfn> function Replace(X, μ):
+        </p>
+        <p>
+          If X is a <a href="https://www.w3.org/TR/sparql11-query/#sparqlTranslateBasicGraphPatterns">Basic Graph Pattern</a>,<br/>
+          &nbsp;&nbsp;&nbsp;Replace(X, μ) = replace X with join(X, Table(μ))
+        </p>
+        <p>
+          If X is a <a href="https://www.w3.org/TR/sparql11-query/#sparqlTranslatePathExpressions">Property Path Expression</a>,<br/>
+          &nbsp;&nbsp;&nbsp;Replace(X, μ) = replace X with join(X, Table(μ))
+        </p>
+        <p>
+          If X is of the form <a href="https://www.w3.org/TR/sparql11-query/#sparqlTranslateGraphPatterns"><tt>Graph(Var, pattern)</tt></a>,<br/>
+          &nbsp;&nbsp;&nbsp;Replace(X, μ) = replace X with join(X, Table(μ))
+        </p>
+      </div>
 
-<pre>== Definition: Replace(pattern, μ)
-
-For solution mapping μ, define Table(μ) be the multiset forms from μ.
-
-Table(μ) = ToMultiSet(solution sequence { μ })
-
-Replace(X, μ) is
-If X is a BGP ,
-    replace X with join(X, Table(μ))
-
-If X is a property path expression,
-    replace X with join(P, Table(μ))
-
-If X is Graph(Var, pattern)
-    replace X with join(X, Table(μ))
-
-
-== Definition: Evaluation of Exists
-
-Let μ be the current solution mapping for a filter and X a graph pattern:
-
-exists(X) = true if and only if
-              eval(D(G), Replace(PrjMap(X), μ)
-            is a non empty solution sequence.
-
-exists(X) = false otherwise
-</pre>
-
+      <div class="defn">
+        <b>Definition: <a id="defn_valuesinsertion" name="defn_valuesinsertion">Evaluation of Exists</a></b>
+        <p>
+          Let μ be the current solution mapping for a filter and X a graph pattern,
+          define the <dfn>Evaluation of Exists</dfn> <tt>exists(X)</tt>
+        </p>
+        <p>
+        &nbsp;&nbsp;&nbsp;exists(X) = true if and only if eval(D(G), Replace(PrjMap(X), μ) is a non empty solution sequence.
+        </p>
+        <p>
+        &nbsp;&nbsp;&nbsp;exists(X) = false otherwise
+        </p>
+      </div>
 
       <p>Note: Incomplete: <tt>HAVING</tt></p>
 
@@ -321,7 +376,7 @@ exists(X) = false otherwise
           introductory paragraph.
         </p>
 
-<pre>query-errata-N:
+<pre class="nohighlight box">query-errata-N:
 
 "Section 18.2 Translation to the SPARQL Algebra" intro (end):
 
@@ -331,8 +386,6 @@ outcome of evaluating a graph pattern is a multiset.
 Multisets of solution mappings are elements of the SPARQL algebra.  Multisets
 of solution mappings count as graph patterns.
 </pre>
-      </section>
-
       </section>
 
       <section>
@@ -373,10 +426,10 @@ of solution mappings count as graph patterns.
             For each <a href="https://www.w3.org/TR/sparql11-query/#rDataBlock">DataBlock</a>,
             form a solution mapping from the variable in the corresponding position in list of variables (or single variable),
             omitting a binding if the BindingValue is the word UNDEF.
-          </p><p>
-            Combine each solution mappings into a solution sequence S, and apply <tt>ToMultiSet<tt>.
+            </p><p>
+            Combine each solution mappings into a solution sequence S, and apply <tt>ToMultiSet</tt>.
             <pre class="codeBlock">The result is ToMultiset(S)</pre>
-          </p>
+            </p>
           </blockquote>
           <p>The text in 18.2.4.3 then needs to be aligned:
             <tt>ToMultiSet(data)</tt> becomes <tt>translate(data)</tt>.
