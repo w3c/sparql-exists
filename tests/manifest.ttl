@@ -59,7 +59,7 @@
 	mf:feature sparql:exists ;
     mf:action
          [ qt:query  <exists-graph-1.rq> ;
-           qt:data   <exists-graph.trig> ] ;
+           qt:data   <exists-graph.nq> ] ;
     mf:result  <exists-graph-1.srj>
     .
 
@@ -68,6 +68,6 @@
 	mf:feature sparql:exists ;
     mf:action
          [ qt:query  <exists-graph-2.rq> ;
-           qt:data   <exists-graph.trig> ] ;
+           qt:data   <exists-graph.nq> ] ;
     mf:result  <exists-graph-2.srj>
     .
