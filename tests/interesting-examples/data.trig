@@ -1,0 +1,8 @@
+@prefix : <http://example/> .
+
+:s :p :v .
+
+GRAPH :g {
+  :s :p :v .
+  :t :r :w .
+}

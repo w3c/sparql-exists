@@ -1,0 +1,10 @@
+PREFIX : <http://example/>
+
+SELECT ?x WHERE {
+    ?x :p ?v .
+    FILTER ( EXISTS {
+      GRAPH :g { 
+        ?x :p ?w. FILTER ( ?w = ?v )
+      }
+    } )
+}

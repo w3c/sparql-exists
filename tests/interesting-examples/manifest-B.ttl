@@ -1,0 +1,124 @@
+@prefix rdf:    <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix : <http://www.w3.org/2009/sparql/docs/tests/data-sparql11/exists/manifest#> .
+@prefix rdfs:	<http://www.w3.org/2000/01/rdf-schema#> .
+@prefix mf:     <http://www.w3.org/2001/sw/DataAccess/tests/test-manifest#> .
+@prefix qt:     <http://www.w3.org/2001/sw/DataAccess/tests/test-query#> .
+@prefix dawgt:   <http://www.w3.org/2001/sw/DataAccess/tests/test-dawg#> .
+@prefix sparql:  <http://www.w3.org/ns/sparql#> .
+
+<>  rdf:type mf:Manifest ;
+    rdfs:label "Interesting Examples" ;
+    mf:entries
+    (
+        :exists-interesting-01
+        :exists-interesting-02
+        :exists-interesting-03
+        :exists-interesting-04
+        :exists-interesting-05
+        :exists-interesting-06
+        :exists-interesting-07
+        :exists-interesting-08
+        :exists-interesting-09
+        :exists-interesting-10
+        :exists-interesting-11
+    ).
+
+:exists-interesting-01 rdf:type mf:QueryEvaluationTest ;
+    mf:name "Interesting 01" ;
+	mf:feature sparql:exists ;
+    mf:action
+         [ qt:query  <interesting-01.rq> ;
+           qt:data   <data.ttl> ] ;
+    mf:result  <interesting-01.srj>
+    .
+
+:exists-interesting-02 rdf:type mf:QueryEvaluationTest ;
+    mf:name "Interesting 02" ;
+	mf:feature sparql:exists ;
+    mf:action
+         [ qt:query  <interesting-02.rq> ;
+           qt:data   <data.ttl> ] ;
+    mf:result  <interesting-02.srj>
+    .
+
+:exists-interesting-03 rdf:type mf:QueryEvaluationTest ;
+    mf:name "Interesting 03" ;
+	mf:feature sparql:exists ;
+    mf:action
+         [ qt:query  <interesting-03.rq> ;
+           qt:data   <data.ttl> ] ;
+    mf:result  <interesting-03.srj>
+    .
+
+:exists-interesting-04 rdf:type mf:QueryEvaluationTest ;
+    mf:name "Interesting 04" ;
+	mf:feature sparql:exists ;
+    mf:action
+         [ qt:query  <interesting-04.rq> ;
+           qt:data   <data.ttl> ] ;
+    mf:result  <interesting-04.srj>
+    .
+
+:exists-interesting-05 rdf:type mf:QueryEvaluationTest ;
+    mf:name "Interesting 05" ;
+	mf:feature sparql:exists ;
+    mf:action
+         [ qt:query  <interesting-05.rq> ;
+           qt:data   <data.ttl> ] ;
+    mf:result  <interesting-05.srj>
+    .
+
+:exists-interesting-06 rdf:type mf:QueryEvaluationTest ;
+    mf:name "Interesting 06" ;
+	mf:feature sparql:exists ;
+    mf:action
+         [ qt:query  <interesting-06.rq> ;
+           qt:data   <data.ttl> ] ;
+    mf:result  <interesting-06.srj>
+    .
+
+:exists-interesting-07 rdf:type mf:QueryEvaluationTest ;
+    mf:name "Interesting 07" ;
+	mf:feature sparql:exists ;
+    mf:action
+         [ qt:query  <interesting-07.rq> ;
+           qt:data   <data.nq> ] ;
+    mf:result  <interesting-07.srj>
+    .
+
+:exists-interesting-08 rdf:type mf:QueryEvaluationTest ;
+    mf:name "Interesting 08" ;
+	mf:feature sparql:exists ;
+    mf:action
+         [ qt:query  <interesting-08.rq> ;
+           qt:data   <data.nq> ] ;
+    mf:result  <interesting-08.srj>
+    .
+
+:exists-interesting-09 rdf:type mf:QueryEvaluationTest ;
+    mf:name "Interesting 09" ;
+	mf:feature sparql:exists ;
+    mf:action
+         [ qt:query  <interesting-09.rq> ;
+           qt:data   <data.nq> ] ;
+    mf:result  <interesting-09.srj>
+    .
+
+:exists-interesting-10 rdf:type mf:QueryEvaluationTest ;
+    mf:name "Interesting 10" ;
+	mf:feature sparql:exists ;
+    mf:action
+         [ qt:query  <interesting-10.rq> ;
+           qt:data   <data.nq> ] ;
+    mf:result  <interesting-10.srj>
+    .
+
+:exists-interesting-11 rdf:type mf:QueryEvaluationTest ;
+    mf:name "Interesting 11" ;
+	mf:feature sparql:exists ;
+    mf:action
+         [ qt:query  <interesting-11.rq> ;
+           qt:data   <data.nq> ] ;
+    mf:result  <interesting-11.srj>
+    .
+    
