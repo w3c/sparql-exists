@@ -1,5 +1,5 @@
-PREFIX :        <http://example/>
-PREFIX rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
+@prefix :        <http://example/> .
+@prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#> .
 
 _:s1 :q 1 .
 _:s1 rdfs:label "_:s1" .

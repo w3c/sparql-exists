@@ -1,4 +1,4 @@
-PREFIX : <http://example/>
+@prefix : <http://example/> .
 
 :s1 :q 1 .
 :s2 :q 2 .
