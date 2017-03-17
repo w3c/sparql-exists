@@ -11,7 +11,7 @@
           name: "Andy Seaborne",
           //url: "https://www.w3.org/community/sparql-exists/",
         }],
-        processVersion: 2015,
+        processVersion: 2017,
         edDraftURI: "https://github.com/w3c/sparql-exists/??",
         shortName: "sparql-exists-v1",
         wg:           "SPARQL Maintenance (EXISTS) Community Group",
@@ -29,7 +29,7 @@
            margin-left:0 ; margin-right: 2ex;
            margin-top: 0.1ex ; margin-bottom: 0.1ex ;
          }
-
+    .indent { margin-left: 25px; }
     /* Definitions - Same as SPARQL spec */
     .defn { margin-left:0 ; margin-right: 2ex; 
             margin-top: 0.1ex ; margin-bottom: 0.1ex ;
@@ -48,12 +48,14 @@
     <section id='abstract'>
       <p>
         A number of issues with the <tt>SPARQL EXISTS</tt> feature have been identified.
-        This feature is used by the <a rel="nofollow" href="https://www.w3.org/2014/data-shapes/">RDF Data Shapes Working Group</a>.
-        This document records community consensus within the <a href="https://www.w3.org/community/sparql-exists/">SPARQL Maintenance (EXISTS) Community Group</a>
+        This document records community consensus within the 
+        <a href="https://www.w3.org/community/sparql-exists/">SPARQL Maintenance (EXISTS) Community Group</a>
         for improvements with an emphasis on maintaining compatibility.
       </p>
       <p>
-     Any tests produced by the group will submitted to the <a rel="nofollow" href="https://www.w3.org/community/rdf-tests/">RDF Test Suite Curation CG</a> for long-term stewardship.
+     Any tests produced by the group will submitted to the 
+     <a rel="nofollow" href="https://www.w3.org/community/rdf-tests/">RDF Test Suite Curation CG</a>
+     for long-term stewardship.
     </p>
 
     </section>
@@ -199,24 +201,71 @@ Some, but not all, implementations diverge from the spec here.
     
     <section>
       <h2>An Alternative to Substitution</h2>
+      <p>@@terminology list??
+        <ul>
+          <li>current row</li>
+          <li>EXISTS expression</li>
+          <li>Project expression</li>
+          <li>Filterd variables = the set of in-scpe variables at the point of the FILTER
+containing EXISTS.</li>
+        </ul>
+        @@
+      </p>
       <p>
-        The process whereby evaluation of <code>EXISTS</code> takes place is defined by
-        <a href="https://www.w3.org/TR/sparql11-query/#defn_substitute">substitution</a>.
-        This section proposes an alternative mechanism with 3 parts:
+        All filtering in SPARQL is determining whether a solution mapping passes some
+        condition. We call this solution mapping the <em>current row</em> in this
+        description. We call the 
+        <a href="https://www.w3.org/TR/sparql11-query/#sparqlQuery">translation to the
+          SPARQL algebra</a> of "pattern", the <dfn>EXISTS pattern</dfn>.
+      </p>
+      <p>
+        Evaluation of the <code>EXISTS</code> function is defined by the process of
+        <a href="https://www.w3.org/TR/sparql11-query/#defn_substitute">substitution</a>
+        appiled to the EXISTS pattern, which is then evaluated. The EXISTS filter
+        expression is true if the evaluation results in one or more solution mappings.
+      </p>
+      <p>
+        This is a section proposes an alternative mechanism.  Rather than replace each
+        variable by the value it is bound to in the current row, this alternative
+        mechanism makes the whole of the current row available at any point in the
+        evaluation of an <code>EXISTS</code> expression. It uses the current row to
+        restrict the binding of variables at the points where variable bindings are
+        created during evaluation of <code>EXISTS</code> to be those from the current row.
+        It makes illegal syntactic constructs that could lead to attempt to rebind a
+        variable from the current row through using the <code>AS</code> syntax.
+      </p>
+      <p>
+        <a href="#solutions">Section 3</a> describes how this alternative definition of
+        <code>EXISTS</code> addresses each of the issues identified in 
+        <a href="#identified-issues">Identifed Issues section</a>.
+      </p>
+      <p>
+        There are 3 parts to the proposal:
       </p>
       <ul>
-        <li>Renaming inner scope variables</li>
-        <li>Disallowing setting variables via <code>extend</code> if the variable is in
-          any possible the current row being filtered</li>
-        <li>Restricting the RDF terms that a varibale can be mapped in in a solution
-          mapping during evaluation of <code>exists</code>.</li>
+        <li>Renaming inner scope variables so that variables only used within a sub-query
+          are not affected by the current row. This reflects the fact that in SPARQL such
+          variables are not present in solutions mappings outside their sub-query.
+        </li>
+        <li>Disallowing syntactic forms that set variables potentially already present in the current
+          row. SPARQL solutions mappings can only have one binding for a variable and the
+          current row prvides that binding.
+        </li>
+        <li>Restricting the value (the RDF term) that a variable can be mapped in a
+          solution mapping during evaluation of <code>EXISTS</code>.  This is the
+          replacement for substitution; evaluation that binds a variable proceeds through
+          graph pattern matching but the values it can take are immediately restricted to
+          that in the current row.
+        </li>
       </ul>
 
       <section>
         <h3>Renaming</h3>
         <p>
-          Within sub-queries, variables with the same name can be used but they do not
-          appear in the overall results of the query. Such inner variables are not 
+          Within sub-queries, variables with the same name can be used but do not
+          appear in the overall results of the query if they do not occur in the
+          projection in the sub-query.
+          Such inner variables are not 
           <a href="https://www.w3.org/TR/sparql11-query/#variableScope">in-scope</a>
           when they are no mentioned in the projection part of the inner SELECT expression.
         </p>
@@ -230,15 +279,29 @@ Some, but not all, implementations diverge from the spec here.
    }
 }</pre>
         <p>Here, the <tt>?s</tt> is not mentioned in the projection in 
-          <tt>SELECT (count(*) AS ?C)</tt>.
+          <tt>SELECT (count(*) AS ?C)</tt>. Replacing <tt>?s</tt> by, for example,
+          <tt>?V1234</tt> in the sub-query does not change the overall results.
         </p>
+        <pre class="nohighlight box">SELECT * {
+    ?s :value ?v .
+    FILTER EXISTS {
+       {SELECT (count(*) AS ?C) {
+            ?V1234 :property ?w .
+       }}
+       FILTER ( ?C < ?v )
+   }
+}</pre>
         <p>Such variable usages can be replaced with a variable of a different name, if
           that name is not used anywhere else in the query, and the same results are
-          obtained in the sub-query.
+          obtained in the sub-query. A sub-query always has a projection as its top-most
+          algebra operator.
         </p>
         <p>
           To preserve this, any such variables are renamed so they do not coincide with
-          varibales from the current row being filter by EXISTS.
+          variables from the current row being filter by <code>EXISTS</code>.
+        </p>
+        <p>The SPARQL algebra "project" operator has two components, an algebra expression
+          and a set of variables for the projection.
         </p>
         <div class="defn">
           <b>Definition: <a id="defn_projmap" name="defn_projmap">Projection Expression Variable Remapping</a></b>
@@ -248,9 +311,10 @@ Some, but not all, implementations diverge from the spec here.
             <a href="https://www.w3.org/TR/sparql11-query/#sparqlQueryVariables">V</a>,
             the set of all variables, to V where:
           </p>
-          <p>
-          &nbsp;&nbsp;&nbsp;F(v) = v if v in PV<br/>
-          &nbsp;&nbsp;&nbsp;F(v) = v1 where v1 is a fresh variable
+          <p class="indent">
+            F(v) = v if v in PV<br/>
+            F(v) = v1 where v is a variable mentioned in the project expression, but not in PV, and v1 is a fresh variable
+            F(v) = v otherwise.
           </p>
           <p>
             Define the <dfn>Projection Expression Variable Remapping</dfn> PrjMap(P,PV) to
@@ -259,98 +323,126 @@ Some, but not all, implementations diverge from the spec here.
             P is evaluated.
           </p>
         </div>
+        <p> 
+          This process is applied throughout the graph pattern of <code>EXISTS</code>:
+        </p>
         <div class="defn">
           <b>Definition: <a id="defn_varrename" name="defn_varrename">Variable Remapping</a></b>
           <p>
-            For any algebra expression X, not a projection, define the
+            For any algebra expression X define the
             <dfn>Variable Remapping</dfn> PrjMap(X):
           </p>
-          <p>
-            &nbsp;&nbsp;&nbsp;PrjMap(X) = replace all project operations with PrjMap(P,PV) for each projection in X.
+          <p class="indent">
+            PrjMap(X) = replace all project operations <tt>project(P PV)</tt> with <tt>project(PrjMap(P,PV) PV)</tt> for each projection in X.
           </p>
+          <p>This replacement is applied bottom-up when there are multiple project
+            operations in the graph pattern of <code>EXISTS</code>.
         </div>
+        <p>
+          Applying the renaming steps inside a sub-query does not change the solution
+          mappings resulting from evaluating the sub-query. Remapping is only applied to
+          variables not visible outside the sub-query. Renaming a variable in a SPARQL
+          algebra expression causes the variable name used in bindings from evaluating the
+          algebra expression to change. Since these are only variables that are not
+          visible outside the sub-query, because they do not occur in the projection, the
+          result of the sub-query is unchanged. SPARQL algebra expressions can not access
+          the name of a variable nor introduce a variable except by remapping. Remapping
+          is only applied to variables not visible outside the sub-query.
+        </p>
       </section>
 
       <section>
         <h3>Limitations on Assignment</h3>
         <p>
-          Assignment (an "AS" in SPARQL syntax) to a variable which is in-scope for the
-          <tt>FILTER</tt> is not allowed.  Any potential variables in a "current row", are considered
-          in-scope for the <code>EXIST</code> expression.
-          Section <a href="https://www.w3.org/TR/sparql11-query/#variableScope">18.2.1 Variable Scope</a>
-          defines the set of variables that are in-scope in the
-          <a href="https://www.w3.org/TR/sparql11-query/#rGroupGraphPattern">GroupGraphPattern</a>
-          where the filter appears.
+          SPARQL Syntactic forms that attempt to bind a variable through the use of
+          <code>AS</code> that might already be in a solution mapping are forbidden in
+          SPARQL: this is covered in the syntactic restrictions of
+          <a href="https://www.w3.org/TR/sparql11-query/#sparqlGrammar">19.8 Grammar</a>, 
+          notes 12 and 13.
         </p>
-        <p>This is a syntactic restriction and is added to the notes in section 
-          <a href="https://www.w3.org/TR/sparql11-query/#sparqlGrammar">19.8 Grammar</a>.
-          See also notes 12 and 13 that already apply.
+        <p>
+          This proposal adds the restriction that any variables in a current
+          row, the set of variables 
+          <a href="https://www.w3.org/TR/sparql11-query/#variableScope">in-scope</a>
+          of the FILTER containing EXISTS, can not be assigned with the <tt>extend</tt>
+          algebra function linked to the <code>AS</code> syntax.
         </p>
+        <p>
+          Any use of <code>VALUES</code> in the EXISTS expression must not use a variable
+          in the current row.
+        </p>
+        <p>(@@ strictly, unnecessary, it just makes EXISTS false but quite confusing)</p> 
       </section>
 
       <section>
         <h3>Restriction of Bindings</h3>
-
-        <p>The proposal is to retain the variables from the current row are retained, not
-          substitute them for RDF terms before evaluation, but also restrict 
+        
+        <p>The proposal is to retain the variables from the current row, not
+          substitute them for RDF terms before evaluation, and also to restrict 
           the binding of the solution to the RDF term of the current row. This occurs
           after renaming.
         </p>
-      <p>
-      <p>
-        Solution mappings define binding for variables in 3 places:
-      </p>
-      <ul>
-        <li><a href="https://www.w3.org/TR/sparql11-query/#BGPsparql">Basic Graph Pattern Matching</a></li>
-        <li><a href="https://www.w3.org/TR/sparql11-query/#PropertyPathPatterns">Property Path Patterns</a></li>
-        <li>The <a href="https://www.w3.org/TR/sparql11-query/#defn_evalGraph">evaluation of algebra form
-            <code>Graph(var,P)</code></a> involving a variable (from the syntax <code>GRAPH ?variable {...}</code>)</li>
-      </ul>
-      <p>Note that other place where solution mappings add varibales is in
-        <code>extend</code> but the "no assignment" condition precludes this happening.
-      </p>
-      <p>Restricting the RDF Terms for a variable binding is done using
-        inline data that is joined with the evalaution of the basic graph pattern,
-        property path or graph match.
-      </p>
-      <div class="defn">
-        <b>Definition: <a id="defn_valuesinsertion" name="defn_valuesinsertion">Values Insertion</a></b>
         <p>
-          For solution mapping μ, define Table(μ) to be the multiset formed from μ.
+          Binding for variables occur in several places in SPARQL:
         </p>
-        <p>
-        &nbsp;&nbsp;&nbsp;Table(μ) = { μ }<br/>
-        &nbsp;&nbsp;&nbsp;Card[μ] = 1
+        <ul>
+          <li><a href="https://www.w3.org/TR/sparql11-query/#BGPsparql">Basic Graph Pattern Matching</a></li>
+          <li><a href="https://www.w3.org/TR/sparql11-query/#PropertyPathPatterns">Property Path Patterns</a></li>
+          <li>The <a href="https://www.w3.org/TR/sparql11-query/#defn_evalGraph">evaluation of algebra form
+              <code>Graph(var,P)</code></a> involving a variable (from the syntax <code>GRAPH ?variable {...}</code>)
+          </li>
+        </ul>
+        <p>Note that other place where solution mappings add variables is in
+          <code>extend</code> function (connected to the <code>AS</code> syntax) but the
+          <a href="#limitations-on-assignment">Limitations on Assignment</a>
+          forbid this being of variables of the current row.
         </p>
-        <p>
-          Define the <dfn>Values Insertion</dfn> function <tt>Replace(X, μ)</tt> to
-          replace each occurence Y of a 
-          <a href="https://www.w3.org/TR/sparql11-query/#sparqlTranslateBasicGraphPatterns">Basic Graph Pattern</a>,
-          <a href="https://www.w3.org/TR/sparql11-query/#sparqlTranslatePathExpressions">Property Path Expression</a>,
-           <a href="https://www.w3.org/TR/sparql11-query/#sparqlTranslateGraphPatterns"><tt>Graph(Var, pattern)</tt>
-          in X with join(Y, Table(μ)).
+        <p>Restricting the RDF Terms for a variable binding is done using
+          inline data that is joined with the evalaution of the basic graph pattern,
+          property path or graph match.
         </p>
-      </div>
 
-      <div class="defn">
-        <b>Definition: <a id="defn_valuesinsertion" name="defn_valuesinsertion">Evaluation of Exists</a></b>
+        <div class="defn">
+          <b>Definition: <a id="defn_valuesinsertion" name="defn_valuesinsertion">Values Insertion</a></b>
+          <p>
+            For solution mapping μ, define Table(μ) to be the multiset formed from μ.
+          </p>
+          <p class="indent">
+            Table(μ) = { μ }<br/>
+            Card[μ] = 1
+          </p>
+          <p>
+            Define the <dfn>Values Insertion</dfn> function <tt>Replace(X, μ)</tt> to
+            replace each occurence Y of a 
+            <a href="https://www.w3.org/TR/sparql11-query/#sparqlTranslateBasicGraphPatterns">Basic Graph Pattern</a>,
+            <a href="https://www.w3.org/TR/sparql11-query/#sparqlTranslatePathExpressions">Property Path Expression</a>,
+            <a href="https://www.w3.org/TR/sparql11-query/#sparqlTranslateGraphPatterns"><tt>Graph(Var, pattern)</tt></a>
+            in X with join(Y, Table(μ)).
+          </p>
+        </div>
+        
+      </section>
+      <section>
+        <h3>Evaluation of EXISTS</h3>
         <p>
-          Let μ be the current solution mapping for a filter and X a graph pattern,
-          define the <dfn>Evaluation of Exists</dfn> <tt>exists(X)</tt>
+          The evaluation of <code>EXISTS</code> is defined as:
         </p>
-        <p>
-        &nbsp;&nbsp;&nbsp;exists(X) = true if and only if eval(D(G), Replace(PrjMap(X), μ) is a non-empty solution sequence.
-        </p>
-        <p>
-        &nbsp;&nbsp;&nbsp;exists(X) = false otherwise
-        </p>
-      </div>
-
-        <p>Note: Incomplete: <tt>HAVING</tt></p>
-
+        <div class="defn">
+          <b>Definition: <a id="defn_valuesinsertion" name="defn_valuesinsertion">Evaluation of Exists</a></b>
+          <p>
+            Let μ be the current solution mapping for a filter and X a graph pattern,
+            define the <dfn>Evaluation of Exists</dfn> <tt>exists(X)</tt>
+          </p>
+          <p class="indent">
+            exists(X) = true if and only if eval(D(G), Replace(PrjMap(X), μ) is a non-empty solution sequence.
+            <br/>
+            exists(X) = false otherwise
+          </p>
+        </div>
+        <p>@@ Note: does no cover <tt>HAVING</tt></p>
       </section>
     </section>
-
+    
     <section>
       <h2>Solutions</h2>
 
@@ -383,18 +475,40 @@ of solution mappings count as graph patterns.
 
       <section>
         <h3>Issue 2: Substitution happens where definitions are only for variables</h3>
+        <p>
+          Rather then replace a variale but it svalue in the current row, the new
+          mechanism makes the binding of variable to value available. The variable
+          remains in the graph pattern of <code>EXISTS</code> and the evaluation.
+        </p>
       </section>
 
       <section>
          <h3>Issue 3: Blank nodes substituted into BGPs act as variables</h3>
+         <p>
+           By making the current row, which can include blank nodes, available, and not
+           modifying the BGP by substitution, no blank nodes are introduced into the
+           evalaution of the BGP. Instead, the possible solutions is restricted by the
+           current row.
+         </p>
       </section>
 
       <section>
          <h3>Issue 4: Substitution can flip MINUS to its disjoint-domain case</h3>
+         <p>
+           Issue 4 is addressed because variablea re not removed from the domain of
+           <code>MINUS</code>. This propsoal does not preserve all uses <code>MINUS</code>
+           expressions; the problem identified in issue 4 is considered to be a bug in the original
+           SPARQL specification.
+         </p>
       </section>
 
       <section>
         <h3>Issue 5: Substitution affects disconnected variables</h3>
+        <p>
+          Issue 5 is addressed by noting that variables inside sub-queries which are not
+          projected can be renamed without affecting the sub-query results. Whether to
+          preserve that invariant or allow the variables
+        </p>
       </section>
 
     </section>
@@ -417,7 +531,8 @@ of solution mappings count as graph patterns.
           <blockquote>
             <p>
             For each <a href="https://www.w3.org/TR/sparql11-query/#rDataBlock">DataBlock</a>,
-            form a solution mapping from the variable in the corresponding position in list of variables (or single variable),
+            form a solution mapping from the variable in the corresponding
+            position in list of variables (or single variable),
             omitting a binding if the BindingValue is the word UNDEF.
             </p><p>
             Combine each solution mappings into a solution sequence S, and apply <tt>ToMultiSet</tt>.
@@ -429,6 +544,14 @@ of solution mappings count as graph patterns.
           </p>
       </section>
 
+    </section>
+
+    <section id="security">
+      <h2>Security and Privacy Considerations</h2>
+      <p>
+        This proposal does not introduce any additional security or privacy considerations
+        to SPARQL 1.1.
+      </p>
     </section>
     
   </body>
