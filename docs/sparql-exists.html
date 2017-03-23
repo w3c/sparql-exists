@@ -201,19 +201,9 @@ Some, but not all, implementations diverge from the spec here.
     
     <section>
       <h2>An Alternative to Substitution</h2>
-      <p>@@terminology list??
-        <ul>
-          <li>current row</li>
-          <li>EXISTS expression</li>
-          <li>Project expression</li>
-          <li>Filterd variables = the set of in-scpe variables at the point of the FILTER
-containing EXISTS.</li>
-        </ul>
-        @@
-      </p>
       <p>
         All filtering in SPARQL is determining whether a solution mapping passes some
-        condition. We call this solution mapping the <em>current row</em> in this
+        condition. We call this solution mapping the <dfn>current row</dfn> in this
         description. We call the 
         <a href="https://www.w3.org/TR/sparql11-query/#sparqlQuery">translation to the
           SPARQL algebra</a> of "pattern", the <dfn>EXISTS pattern</dfn>.
@@ -231,7 +221,7 @@ containing EXISTS.</li>
         evaluation of an <code>EXISTS</code> expression. It uses the current row to
         restrict the binding of variables at the points where variable bindings are
         created during evaluation of <code>EXISTS</code> to be those from the current row.
-        It makes illegal syntactic constructs that could lead to attempt to rebind a
+        It makes illegal syntactic constructs that could lead to an attempt to rebind a
         variable from the current row through using the <code>AS</code> syntax.
       </p>
       <p>
@@ -243,13 +233,14 @@ containing EXISTS.</li>
         There are 3 parts to the proposal:
       </p>
       <ul>
-        <li>Renaming inner scope variables so that variables only used within a sub-query
-          are not affected by the current row. This reflects the fact that in SPARQL such
-          variables are not present in solutions mappings outside their sub-query.
+        <li>Renaming inner scope variables so that variables that are only used within a
+          sub-query are not affected by the current row. This reflects the fact that in
+          SPARQL such variables are not present in solutions mappings outside their
+          sub-query.
         </li>
         <li>Disallowing syntactic forms that set variables potentially already present in the current
           row. SPARQL solutions mappings can only have one binding for a variable and the
-          current row prvides that binding.
+          current row provides that binding.
         </li>
         <li>Restricting the value (the RDF term) that a variable can be mapped in a
           solution mapping during evaluation of <code>EXISTS</code>.  This is the
@@ -264,10 +255,9 @@ containing EXISTS.</li>
         <p>
           Within sub-queries, variables with the same name can be used but do not
           appear in the overall results of the query if they do not occur in the
-          projection in the sub-query.
-          Such inner variables are not 
+          projection in the sub-query. Such inner variables are not 
           <a href="https://www.w3.org/TR/sparql11-query/#variableScope">in-scope</a>
-          when they are no mentioned in the projection part of the inner SELECT expression.
+          when they are not mentioned in the projection part of the inner SELECT expression.
         </p>
         <pre class="nohighlight box">SELECT * {
     ?s :value ?v .
@@ -319,8 +309,8 @@ containing EXISTS.</li>
           <p>
             Define the <dfn>Projection Expression Variable Remapping</dfn> PrjMap(P,PV) to
             be the algebra expression P (and the subtree over which the projection is
-            defined) with F applied to every variable of the algebra expression over which
-            P is evaluated.
+            defined) with F applied to every variable of the algebra expression P over
+            which P is evaluated.
           </p>
         </div>
         <p> 
@@ -354,7 +344,7 @@ containing EXISTS.</li>
       <section>
         <h3>Limitations on Assignment</h3>
         <p>
-          SPARQL Syntactic forms that attempt to bind a variable through the use of
+          SPARQL syntactic forms that attempt to bind a variable through the use of
           <code>AS</code> that might already be in a solution mapping are forbidden in
           SPARQL: this is covered in the syntactic restrictions of
           <a href="https://www.w3.org/TR/sparql11-query/#sparqlGrammar">19.8 Grammar</a>, 
@@ -368,17 +358,16 @@ containing EXISTS.</li>
           algebra function linked to the <code>AS</code> syntax.
         </p>
         <p>
-          Any use of <code>VALUES</code> in the EXISTS expression must not use a variable
-          in the current row.
+          In addition, any use of <code>VALUES</code> in the EXISTS expression must not
+          use a variable in the current row.
         </p>
-        <p>(@@ strictly, unnecessary, it just makes EXISTS false but quite confusing)</p> 
       </section>
 
       <section>
         <h3>Restriction of Bindings</h3>
         
         <p>The proposal is to retain the variables from the current row, not
-          substitute them for RDF terms before evaluation, and also to restrict 
+          substitute them for RDF terms, before evaluation, and also to restrict 
           the binding of the solution to the RDF term of the current row. This occurs
           after renaming.
         </p>
@@ -392,16 +381,18 @@ containing EXISTS.</li>
               <code>Graph(var,P)</code></a> involving a variable (from the syntax <code>GRAPH ?variable {...}</code>)
           </li>
         </ul>
-        <p>Note that other place where solution mappings add variables is in
-          <code>extend</code> function (connected to the <code>AS</code> syntax) but the
-          <a href="#limitations-on-assignment">Limitations on Assignment</a>
+        <p>
+          Note that other places where solution mappings add variables are in
+          <code>extend</code> function (connected to the <code>AS</code> syntax)
+          and <code>a multiset</code> from <code>VALUES</code> syntax.
+          <a href="#limitations-on-assignment">Limitations on Assignment</a> 
           forbid this being of variables of the current row.
         </p>
-        <p>Restricting the RDF Terms for a variable binding is done using
+        <p>
+          Restricting the RDF Terms for a variable binding is done using
           inline data that is joined with the evalaution of the basic graph pattern,
           property path or graph match.
         </p>
-
         <div class="defn">
           <b>Definition: <a id="defn_valuesinsertion" name="defn_valuesinsertion">Values Insertion</a></b>
           <p>
@@ -420,7 +411,6 @@ containing EXISTS.</li>
             in X with join(Y, Table(μ)).
           </p>
         </div>
-        
       </section>
       <section>
         <h3>Evaluation of EXISTS</h3>
@@ -439,7 +429,6 @@ containing EXISTS.</li>
             exists(X) = false otherwise
           </p>
         </div>
-        <p>@@ Note: does no cover <tt>HAVING</tt></p>
       </section>
     </section>
     
@@ -476,7 +465,7 @@ of solution mappings count as graph patterns.
       <section>
         <h3>Issue 2: Substitution happens where definitions are only for variables</h3>
         <p>
-          Rather then replace a variale but it svalue in the current row, the new
+          Rather then replace a varialbe by its value in the current row, the new
           mechanism makes the binding of variable to value available. The variable
           remains in the graph pattern of <code>EXISTS</code> and the evaluation.
         </p>
@@ -507,10 +496,16 @@ of solution mappings count as graph patterns.
         <p>
           Issue 5 is addressed by noting that variables inside sub-queries which are not
           projected can be renamed without affecting the sub-query results. Whether to
-          preserve that invariant or allow the variables
+          preserve that invariant or allow the variables to be set by the current row is a
+          choice point - this design preserves the independence of disconnected variables.
         </p>
       </section>
-
+      <section>
+        <h3>Notes</h3>
+        <p>The proposal described in this document does not no cover use of variables from
+          the current row in a <tt>HAVING</tt> clause.
+        </p>
+      </section>
     </section>
 
     <section>
@@ -530,20 +525,21 @@ of solution mappings count as graph patterns.
           <p>Translation of a trailing <tt>VALUES</tt> already uses this form.</p>
           <blockquote>
             <p>
-            For each <a href="https://www.w3.org/TR/sparql11-query/#rDataBlock">DataBlock</a>,
-            form a solution mapping from the variable in the corresponding
-            position in list of variables (or single variable),
-            omitting a binding if the BindingValue is the word UNDEF.
-            </p><p>
-            Combine each solution mappings into a solution sequence S, and apply <tt>ToMultiSet</tt>.
-            <pre class="codeBlock">The result is ToMultiset(S)</pre>
+              For each <a href="https://www.w3.org/TR/sparql11-query/#rDataBlock">DataBlock</a>,
+              form a solution mapping from the variable in the corresponding
+              position in list of variables (or single variable),
+              omitting a binding if the BindingValue is the word UNDEF.
+            </p>
+            <p>
+              Combine each solution mappings into a solution sequence S, and apply <tt>ToMultiSet</tt>.
+              <pre class="codeBlock">The result is ToMultiset(S)</pre>
             </p>
           </blockquote>
-          <p>The text in 18.2.4.3 then needs to be aligned:
-            <tt>ToMultiSet(data)</tt> becomes <tt>translate(data)</tt>.
-          </p>
+        <p>The text in 18.2.4.3 then needs to be aligned:
+          <tt>ToMultiSet(data)</tt> becomes <tt>translate(data)</tt>.
+        </p>
       </section>
-
+      
     </section>
 
     <section id="security">
