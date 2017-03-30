@@ -201,8 +201,10 @@ Some, but not all, implementations diverge from the spec here.
       </section>
     </section>
     
+    <section> <h2>Proposal B</h2>
+ 
     <section>
-      <h2>An Alternative to Substitution</h2>
+      <h3>A Deep-Binding Alternative to Substitution</h3>
       <p>
         All filtering in SPARQL is determining whether a solution mapping passes some
         condition. We call this solution mapping the <dfn>current row</dfn> in this
@@ -253,7 +255,7 @@ Some, but not all, implementations diverge from the spec here.
       </ul>
 
       <section>
-        <h3>Renaming</h3>
+        <h4>Renaming</h4>
         <p>
           Within sub-queries, variables with the same name can be used but do not
           appear in the overall results of the query if they do not occur in the
@@ -344,7 +346,7 @@ Some, but not all, implementations diverge from the spec here.
       </section>
 
       <section>
-        <h3>Limitations on Assignment</h3>
+        <h4>Limitations on Assignment</h4>
         <p>
           SPARQL syntactic forms that attempt to bind a variable through the use of
           <code>AS</code> that might already be in a solution mapping are forbidden in
@@ -366,7 +368,7 @@ Some, but not all, implementations diverge from the spec here.
       </section>
 
       <section>
-        <h3>Restriction of Bindings</h3>
+        <h4>Restriction of Bindings</h4>
         
         <p>The proposal is to retain the variables from the current row, not
           substitute them for RDF terms, before evaluation, and also to restrict 
@@ -415,7 +417,7 @@ Some, but not all, implementations diverge from the spec here.
         </div>
       </section>
       <section>
-        <h3>Evaluation of EXISTS</h3>
+        <h4>Evaluation of EXISTS</h4>
         <p>
           The evaluation of <code>EXISTS</code> is defined as:
         </p>
@@ -435,12 +437,12 @@ Some, but not all, implementations diverge from the spec here.
     </section>
     
     <section>
-      <h2>Solutions</h2>
+      <h3>Solutions</h3>
 
       <p>This section addresses each issue identified, given the proposal above.</p>
       
       <section>
-        <h3>Issue 1: Some uses of EXISTS are not defined during evaluation</h3>
+        <h4>Issue 1: Some uses of EXISTS are not defined during evaluation</h4>
         
         <p>This can be handled by handling solution sequences as graph patterns where
           needed by adding 
@@ -465,7 +467,7 @@ of solution mappings count as graph patterns.
       </section>
 
       <section>
-        <h3>Issue 2: Substitution happens where definitions are only for variables</h3>
+        <h4>Issue 2: Substitution happens where definitions are only for variables</h4>
         <p>
           Rather then replace a varialbe by its value in the current row, the new
           mechanism makes the binding of variable to value available. The variable
@@ -474,7 +476,7 @@ of solution mappings count as graph patterns.
       </section>
 
       <section>
-         <h3>Issue 3: Blank nodes substituted into BGPs act as variables</h3>
+         <h4>Issue 3: Blank nodes substituted into BGPs act as variables</h4>
          <p>
            By making the current row, which can include blank nodes, available, and not
            modifying the BGP by substitution, no blank nodes are introduced into the
@@ -484,7 +486,7 @@ of solution mappings count as graph patterns.
       </section>
 
       <section>
-         <h3>Issue 4: Substitution can flip MINUS to its disjoint-domain case</h3>
+         <h4>Issue 4: Substitution can flip MINUS to its disjoint-domain case</h4>
          <p>
            Issue 4 is addressed because variablea re not removed from the domain of
            <code>MINUS</code>. This propsoal does not preserve all uses <code>MINUS</code>
@@ -494,7 +496,7 @@ of solution mappings count as graph patterns.
       </section>
 
       <section>
-        <h3>Issue 5: Substitution affects disconnected variables</h3>
+        <h4>Issue 5: Substitution affects disconnected variables</h4>
         <p>
           Issue 5 is addressed by noting that variables inside sub-queries which are not
           projected can be renamed without affecting the sub-query results. Whether to
@@ -503,12 +505,71 @@ of solution mappings count as graph patterns.
         </p>
       </section>
       <section>
-        <h3>Notes</h3>
+        <h4>Notes</h4>
         <p>The proposal described in this document does not no cover use of variables from
           the current row in a <tt>HAVING</tt> clause.
         </p>
       </section>
     </section>
+
+    </section>
+
+   <section> <h2>Proposal A</h2>
+
+    <section>
+      <h3>A Shallow-Binding Alternative to Substitution</h3>
+
+      <p>
+	This proposal for <code>EXISTS</code> emphasizes simplicity and
+	the SPARQL notions of variable scoping and bottom-up evaluation of sub-queries over
+	maximum compatability with the current SPARQL definition
+	for <code>EXISTS</code>.
+	Its basic idea is to inject values for the variables in-scope just
+	outside a <code>FILTER</code> expression at the beginning of the
+	pattern argument to <code>EXISTS</code> almost as if
+	a <code>VALUES</code> construct was injected there.
+	</p>
+
+<ol>
+<li> Modify the scoping rules so that variables in-scope at a
+   <code>FILTER</code> are in-scope at the beginning of the pattern argument to
+   any <code>EXISTS</code> in the <code>FILTER</code> expression.  (This is
+   independent of the change to a mapping-based definition but fixes an
+   error that affects <code>EXISTS</code>.)   The additional scoping rule could
+   be written as:<br />
+   In <code>FILTER ... EXISTS { P } ... </code> with <code>P</code> not a sub-select,
+   if <code>v</code> is in-scope from the preceeding elements in the group graph
+   pattern in which the <code>FILTER</code> is used then <code>v</code> is in-scope for an empty
+   BGP that is considered to be inserted just before <code>P</code>.
+   </li>
+<li> Add a new construct, <code>Initial</code>, to the SPARQL syntax and
+  algebra.  <code>Initial</code> will be used to set up the initial multiset of solution
+  mappings inside an <code>EXISTS</code>.  It will work much like <code>VALUES</code> except
+  that it will transfer solution mappings through the <code>EXISTS</code>
+  instead of setting up a constant solution mapping.
+  </li>
+<li> When collecting <code>FILTER</code> elements replace
+   <code>EXISTS P</code> in the filter expression with
+   <code><em>exists(Initial(t),translate(</em>Initial(t) P'<em>))</em></code> 
+   where <code>t</code> is a fresh token, and similarly for <code>NOT
+   EXISTS {P}</code>.  If <code>P</code> is 
+   a <tt>SubSelect</tt> then <code>P'</code> is <code>{P}</code>
+   otherwise <code>P'</code> is just <code>P</code>.
+   </li>
+<li> Translate <code>Initial(t)</code> as itself. </li>
+<li> Change the definition of the <code><em>exists</em></code> function to: <br/>
+   Let <code><em>&mu;</em></code> be the current solution mapping for a filter, <code><em>t</em></code> a token,
+   and <code><em>P</em></code> a graph pattern: The value <code><em>exists(Initial(t),P)</em></code>
+   given <code><em>D(G)</em></code> is true iff
+   <code><em>eval(D(G),<em>P'</em>)</em></code> is a non-empty multiset of solution
+   bindings, where <code><em>P'</em> is <em>P</em></code> with 
+   <code><em>Initial(t)</em></code> replaced by <code><em>{&mu;}</em></code>.
+  </li>
+</ol>
+
+</section>
+
+</section>
 
     <section>
       <h2>Other errata</h2>
