@@ -229,7 +229,7 @@ Some, but not all, implementations diverge from the spec here.
         variable from the current row through using the <code>AS</code> syntax.
       </p>
       <p>
-        <a href="#solutions">Section 3</a> describes how this alternative definition of
+        <a href="#solutions">Section 2.2</a> describes how this alternative definition of
         <code>EXISTS</code> addresses each of the issues identified in 
         <a href="#identified-issues">Identifed Issues section</a>.
       </p>
@@ -568,6 +568,16 @@ of solution mappings count as graph patterns.
 </ol>
 
 </section>
+
+    <section>
+      <h3>Solutions</h3>
+      <p>The same solution as for Proposal B can be used here to solve Issue 1.</p>
+      <p>There is no substitution of variables by values (including blank
+	nodes) thus solving Issues 2, 3, and 4.</p>
+      <p>As the value-injection is done only at the beginning of the
+      argument to <code>EXISTS</code> it will not affect disconnected
+	variables, such solving Issue 5.</p>
+    </section>
 
 </section>
 
