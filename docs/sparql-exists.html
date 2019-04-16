@@ -8,7 +8,7 @@
       var respecConfig = {
         specStatus: "CG-DRAFT",
         editors: [{
-          name: "Andy Seaborne",
+          name: "The SPARQL Exists CG",
           //url: "https://www.w3.org/community/sparql-exists/",
         }],
         processVersion: 2017,
@@ -47,17 +47,9 @@
   <body>
     <section id='abstract'>
       <p>
-        This document records several potential problems with respect to <tt>SPARQL EXISTS</tt> and
-	contains two proposals for improvement, one that emphasizes maintaining
-	some form of compatibility and one that emphasizes producing a
-	simple solution that fits well into the rest of <tt>SPARQL</tt>.
+        This document identifies problems with respect to <tt>SPARQL EXISTS</tt> and
+	      provides two proposals for improvement.
       </p>
-      <p>
-     Any tests produced by the group will submitted to the 
-     <a rel="nofollow" href="https://www.w3.org/community/rdf-tests/">RDF Test Suite Curation CG</a>
-     for long-term stewardship.
-    </p>
-
     </section>
     <section id='sotd'>
       <p>
@@ -76,11 +68,6 @@
         <li>Substitution can flip MINUS to its disjoint-domain case</li>
         <li>Substitution affects disconnected variables</li>
       </ol>
-
-      <p>Orginal message from Peter F. Patel-Schneider :
-      <a href="https://lists.w3.org/Archives/Public/public-sparql-exists/2016Jul/0014.html"
-      >public-sparql-exists/2016Jul/0014</a>
-      .</p>
 
       <section>
         <h3>Issue 1: Some uses of EXISTS are not defined during evaluation</h3>
@@ -504,7 +491,7 @@ of solution mappings count as graph patterns.
       </section>
       <section>
         <h4>Notes</h4>
-        <p>The proposal described in this document does not no cover use of variables from
+        <p>The proposal described in this document does not cover use of variables from
           the current row in a <tt>HAVING</tt> clause.
         </p>
       </section>
